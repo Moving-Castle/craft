@@ -107,7 +107,7 @@ function deleteUser() {
     var userId = userRow.userId;
     $.post('${ctx}/sys/user/deleteUser', {userId: userId}, function (data) {
         parseAjaxReturnInfo(data, function () {
-            var index = $('#user-dg').datagrid('getRowIndex');
+            var index = $('#user-dg').datagrid('getRowIndex',$('#user-dg').datagrid('getSelected'));
             $('#user-dg').datagrid('deleteRow', index);
         })
     }, 'json');

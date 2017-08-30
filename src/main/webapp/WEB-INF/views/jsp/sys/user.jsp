@@ -160,7 +160,7 @@ function saveUser(type) {
         $.post('${ctx}/sys/user/addUser', $('#user-form').serialize(), function (data) {
             parseAjaxReturnInfo(data, function () {
                 $('#user-dg').datagrid('reload');
-                closeWindow($('#user-dg'));
+                closeWindow($('#user-dialog'));
             })
         }, 'json');
     }

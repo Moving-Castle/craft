@@ -30,6 +30,7 @@
     <div data-options="region:'north'" data-options="border:false" style="height: 50px;">
         <span>轻松一刻在线聊天</span>
         <a id="signin" class="easyui-linkbutton button-line-black" onclick="connect()" style="width: 100px;">登&nbsp;&nbsp;录</a>
+        <a id="signinOne" class="easyui-linkbutton button-line-black" onclick="connectOne()" style="width: 100px;">登录（单一）</a>
         <a id="signout" class="easyui-linkbutton button-line-black" onclick="disconnect()" style="width: 100px;">离&nbsp;&nbsp;线</a>
     </div>
     <div data-options="region:'west'" data-options="border:false" style="width: 250px;"></div>
@@ -66,30 +67,47 @@
 <script src="http://cdn.bootcss.com/stomp.js/2.3.3/stomp.min.js"></script>
 <script type="text/javascript">
     var stompClient = null;
-
-    function setConnected(connected) {
-        if(connected){
-            $("#signin").linkbutton('disable');
-            $("#signout").linkbutton('enable');
-        }else {
-            $("#signin").linkbutton('enable');
-            $("#signout").linkbutton('disable');
-        }
+    var index = null;
+    function setConnected(index,connected) {
+            if(connected){
+                $("#signin").linkbutton('disable');
+                $("#signinOne").linkbutton('disable');
+                $("#signout").linkbutton('enable');
+            }else {
+                $("#signin").linkbutton('enable');
+                $("#signinOne").linkbutton('enable');
+                $("#signout").linkbutton('disable');
+            }
     }
 
     function connect() {
+        index =1;
         /*RMS为上下文起始路径*/
         var socket = new SockJS('/RMS/chat-websocket');
         stompClient = Stomp.over(socket);
         stompClient.connect({}, function (frame) {
-            setConnected(true);
+            setConnected(index,true);
             showGreeting('Connected: ' + frame);
             stompClient.subscribe('/topic/greetings', function (greeting) {
                 showGreeting(JSON.parse(greeting.body));
             });
         });
     }
-
+    //暂时设置为获取本机userid模式，后面修改，选择用户，获取用户id，从而和用户进行一对一聊天
+    function connectOne() {
+        index =2;
+        /*RMS为上下文起始路径*/
+        var userId = currentUserId;
+        var socket = new SockJS('/RMS/chat-websocket');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function (frame) {
+            setConnected(index,true);
+            showGreeting('Connected: ' + frame);
+            stompClient.subscribe('/user/'+userId+'/message', function (greeting) {
+                showGreeting(JSON.parse(greeting.body));
+            });
+        });
+    }
     function disconnect() {
         if (stompClient != null) {
             stompClient.disconnect();
@@ -107,7 +125,13 @@
             userName: userName,
             content: message
         };
-        stompClient.send("/app/hello", {}, JSON.stringify(params));
+        //群发
+        if(1==index){
+            stompClient.send("/app/hello", {}, JSON.stringify(params));
+        }else if(2==index){//单个
+            stompClient.send('/user/'+userId+'/message',{}, JSON.stringify(params));
+        }
+        
     }
 
     function showGreeting(message){
@@ -133,10 +157,7 @@
                 '</dl>');
         }
     }
-
-    $(function () {
-
-    });
+    
 </script>
 </body>
 </html>
